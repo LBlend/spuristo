@@ -1,16 +1,51 @@
-use bluer;
+use bluer::*;
+use futures::stream::{StreamExt};
+use std::collections::HashMap;
+
 
 pub async fn yeet() {
-    let session = bluer::Session::new().await;
+     let session = Session::new().await.expect("I hate error handling");
+    let adapter = session.adapter("hci0").expect("I hate error handling");
 
-    let session = bluer::Session::new().await.expect("I hate error handling");
-    let adapter_names = session.adapter_names().await.expect("I really hate error handling");
-    for adapter_name in adapter_names {
-        println!("{}", adapter_name);
+    let mut devices = HashMap::new();
+
+    let mut bluetooth_stream = adapter.discover_devices().await.expect("I really hate error handling");
+    while let Some(item) = bluetooth_stream.next().await {
+        match item {
+            AdapterEvent::DeviceAdded(mac_address) => {
+                let device = adapter.device(mac_address).expect("I really hate error handling");
+                let name = device.alias().await.expect("A");
+                let rssi = device.rssi().await.expect("yeet");
+                match rssi {
+                    Some(signalstrength) => {
+                        if signalstrength > -75 {
+                            devices.insert(mac_address, signalstrength);
+                            println!("MAC: {}\tName: {}\tStrength: {}", mac_address, name, signalstrength);
+                            println!("{:?} Devices connected", devices.len());
+                        }
+                    },
+                    None => ()
+                }
+                ()
+            },
+            AdapterEvent::DeviceRemoved(mac_address) => {
+                devices.remove(&mac_address);
+                ()
+            },
+            AdapterEvent::PropertyChanged(property) => {
+                match property {
+                    AdapterProperty::Address(address) => println!("address changed to:\t{}", address),
+                    _ => ()
+                }
+            }
+            _ => ()
+        }
     }
 }
 
-pub fn main() {
-    let future = yeet();
+
+#[tokio::main]
+pub async fn main() {
+    yeet().await;
     println!("Jeg hater Rust");
 }
