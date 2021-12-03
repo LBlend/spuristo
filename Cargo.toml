@@ -7,5 +7,5 @@ edition = "2018"
 
 [dependencies]
 futures = "0.3"
-bluer = "0.11.1"
+bluer = "0.13.0"
 tokio = { version = "1.12.0", features = ["full"] }
