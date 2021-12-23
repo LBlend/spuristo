@@ -47,6 +47,8 @@ pub async fn listen() {
             }
 
             AdapterEvent::DeviceRemoved(mac_address) => {
+                // Remove all devices that are already registered.
+                // Not all devices are registered due to being below the signal strength threshold.
                 if let Some(_) = devices.remove(&mac_address) {
                     let output = &*format!("[{}] Device removed!\t\tMAC: {}", Local::now(), mac_address);
                     println!("{}", Colour::Red.paint(output));
