@@ -19,7 +19,7 @@ pub async fn listen() {
         .expect("Failed creating bluetooth stream. Make sure your bluetooth adapter is turned on");
 
     while let Some(item) = bluetooth_stream.next().await {
-        println!("{} Devices connected", devices.len()); // TODO: alternate mode "pinning"
+        println!("Devices connected: {}", devices.len()); // TODO: alternate mode "pinning"
 
         match item {
             AdapterEvent::DeviceAdded(mac_address) => {
