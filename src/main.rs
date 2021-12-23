@@ -52,7 +52,7 @@ pub async fn listen() {
                 }
             }
 
-            _ => (),
+            _ => ()
         }
     }
 }
