@@ -46,9 +46,10 @@ pub async fn listen() {
             }
 
             AdapterEvent::DeviceRemoved(mac_address) => {
-                devices.remove(&mac_address);
-                let output = &*format!("Device removed!\t\tMAC: {}", mac_address);
-                println!("{}", Colour::Red.paint(output));
+                if let Some(_) = devices.remove(&mac_address) {
+                    let output = &*format!("Device removed!\t\tMAC: {}", mac_address);
+                    println!("{}", Colour::Red.paint(output));
+                }
             }
 
             _ => (),
