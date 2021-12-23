@@ -3,12 +3,22 @@ use bluer::*;
 use chrono::Local;
 use futures::stream::StreamExt;
 use std::collections::HashMap;
+use structopt::StructOpt;
 
 // Global constants
-const THRESHOLD: i16 = -75; // Blutetooth strength in dBm
 const BLUETOOTH_ADAPTER_NAME: &str = "hci0";
 
-pub async fn listen() {
+// CLI arguments struct
+#[derive(StructOpt)]
+struct Opt {
+    #[structopt(default_value = "-75", long)]
+    threshold: i16,
+
+    #[structopt(short, long)]
+    training: bool,
+}
+
+pub async fn listen(threshold: i16, training: bool) {
     let session = Session::new().await.unwrap();
     let adapter = session.adapter(BLUETOOTH_ADAPTER_NAME).unwrap();
 
@@ -35,7 +45,7 @@ pub async fn listen() {
                     .expect("Signal strength couldn't be found");
 
                 if let Some(signalstrength) = rssi {
-                    if signalstrength > THRESHOLD {
+                    if signalstrength > threshold {
                         devices.insert(mac_address, signalstrength);
                         let output = &*format!(
                             "[{}] Device added!\t\tMAC: {}\t\tName: {}\t\tStrength: {} dBm",
@@ -66,5 +76,16 @@ pub async fn listen() {
 
 #[tokio::main]
 pub async fn main() {
-    listen().await;
+    let opt = Opt::from_args();
+    let mode = if opt.training {
+        "training"
+    } else {
+        "prediction"
+    };
+    let launch_message = format!(
+        "Spuristo launched in {} mode with threshold set to {} dBm",
+        mode, opt.threshold
+    );
+    println!("{}", Colour::Blue.bold().paint(launch_message));
+    listen(opt.threshold, opt.training).await;
 }
