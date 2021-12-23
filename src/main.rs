@@ -1,8 +1,8 @@
 use ansi_term::Colour;
 use bluer::*;
+use chrono::Local;
 use futures::stream::StreamExt;
 use std::collections::HashMap;
-use chrono::Local;
 
 // Global constants
 const THRESHOLD: i16 = -75; // Blutetooth strength in dBm
@@ -39,7 +39,10 @@ pub async fn listen() {
                         devices.insert(mac_address, signalstrength);
                         let output = &*format!(
                             "[{}] Device added!\t\tMAC: {}\t\tName: {}\t\tStrength: {} dBm",
-                            Local::now(), mac_address, name, signalstrength
+                            Local::now(),
+                            mac_address,
+                            name,
+                            signalstrength
                         );
                         println!("{}", Colour::Green.paint(output));
                     }
@@ -50,12 +53,13 @@ pub async fn listen() {
                 // Remove all devices that are already registered.
                 // Not all devices are registered due to being below the signal strength threshold.
                 if let Some(_) = devices.remove(&mac_address) {
-                    let output = &*format!("[{}] Device removed!\t\tMAC: {}", Local::now(), mac_address);
+                    let output =
+                        &*format!("[{}] Device removed!\t\tMAC: {}", Local::now(), mac_address);
                     println!("{}", Colour::Red.paint(output));
                 }
             }
 
-            _ => ()
+            _ => (),
         }
     }
 }
