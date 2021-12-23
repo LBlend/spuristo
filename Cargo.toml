@@ -1,6 +1,6 @@
 [package]
 name = "spuristo"
-authors = ["LBlend"]
+authors = ["LBlend <lblend@protonmail.com>"]
 version = "0.1.0"
 edition = "2018"
 
