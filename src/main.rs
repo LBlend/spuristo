@@ -47,14 +47,11 @@ pub async fn listen(threshold: i16, training: bool) {
                 if let Some(signalstrength) = rssi {
                     if signalstrength > threshold {
                         devices.insert(mac_address, signalstrength);
-                        let output = &*format!(
-                            "[{}] Device added!\t\tMAC: {}\t\tName: {}\t\tStrength: {} dBm",
-                            Local::now(),
-                            mac_address,
-                            name,
-                            signalstrength
+                        let output = format!(
+                            "[{}] Device added!\t\tMAC: {mac_address}\t\tName: {name}\t\tStrength: {signalstrength} dBm",
+                            Local::now()
                         );
-                        println!("{}", Colour::Green.paint(output));
+                        println!("{}", Colour::Green.paint(&output));
                     }
                 }
             }
@@ -64,8 +61,8 @@ pub async fn listen(threshold: i16, training: bool) {
                 // Not all devices are registered due to being below the signal strength threshold.
                 if let Some(_) = devices.remove(&mac_address) {
                     let output =
-                        &*format!("[{}] Device removed!\t\tMAC: {}", Local::now(), mac_address);
-                    println!("{}", Colour::Red.paint(output));
+                        format!("[{}] Device removed!\t\tMAC: {mac_address}", Local::now());
+                    println!("{}", Colour::Red.paint(&output));
                 }
             }
 
