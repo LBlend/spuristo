@@ -34,15 +34,18 @@ pub async fn listen(threshold: i16, training: bool) {
 
         match item {
             AdapterEvent::DeviceAdded(mac_address) => {
-                let device = adapter.device(mac_address).unwrap();
-                let name = device
-                    .alias()
-                    .await
-                    .expect("Alias of added device couldn't be found");
-                let rssi = device
-                    .rssi()
-                    .await
-                    .expect("Signal strength couldn't be found");
+                let device = match adapter.device(mac_address) {
+                    Ok(device) => device,
+                    Err(_) => continue,
+                };
+                let name = match device.alias().await {
+                    Ok(name) => name,
+                    Err(_) => continue,
+                };
+                let rssi = match device.rssi().await {
+                    Ok(rssi) => rssi,
+                    Err(_) => continue,
+                };
 
                 if let Some(signalstrength) = rssi {
                     if signalstrength > threshold {
