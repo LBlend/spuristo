@@ -80,9 +80,9 @@ pub async fn main() {
         "prediction"
     };
     let launch_message = format!(
-        "Spuristo launched in {} mode with threshold set to {} dBm",
-        mode, opt.threshold
+        "Spuristo launched in {mode} mode with threshold set to {} dBm",
+        opt.threshold
     );
-    println!("{}", Colour::Blue.bold().paint(launch_message));
+    println!("{}", Colour::Blue.bold().paint(&launch_message));
     listen(opt.threshold, opt.training).await;
 }
