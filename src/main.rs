@@ -5,6 +5,8 @@ use futures::stream::StreamExt;
 use std::collections::HashMap;
 use structopt::StructOpt;
 
+mod macros;
+
 // Global constants
 const BLUETOOTH_ADAPTER_NAME: &str = "hci0";
 
@@ -34,18 +36,9 @@ pub async fn listen(threshold: i16, training: bool) {
 
         match item {
             AdapterEvent::DeviceAdded(mac_address) => {
-                let device = match adapter.device(mac_address) {
-                    Ok(device) => device,
-                    Err(_) => continue,
-                };
-                let name = match device.alias().await {
-                    Ok(name) => name,
-                    Err(_) => continue,
-                };
-                let rssi = match device.rssi().await {
-                    Ok(rssi) => rssi,
-                    Err(_) => continue,
-                };
+                let device = or_continue!(adapter.device(mac_address));
+                let name = or_continue!(device.alias().await);
+                let rssi = or_continue!(device.rssi().await);
 
                 if let Some(signalstrength) = rssi {
                     if signalstrength > threshold {
