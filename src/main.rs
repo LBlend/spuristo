@@ -2,9 +2,11 @@ use ansi_term::Colour;
 use bluer::*;
 use chrono::Local;
 use futures::stream::StreamExt;
-use std::collections::HashMap;
+use std::{boxed::Box, collections::HashMap};
 use structopt::StructOpt;
+use tokio_cron_scheduler::{Job, JobScheduler};
 
+mod api;
 mod macros;
 
 // Global constants
@@ -32,7 +34,7 @@ pub async fn listen(threshold: i16, training: bool) {
         .expect("Failed creating bluetooth stream. Make sure your bluetooth adapter is turned on");
 
     while let Some(item) = bluetooth_stream.next().await {
-        println!("Devices connected: {}", devices.len()); // TODO: alternate mode "pinning"
+        //println!("Devices connected: {}", devices.len()); // TODO: alternate mode "pinning"
 
         match item {
             AdapterEvent::DeviceAdded(mac_address) => {
@@ -70,6 +72,8 @@ pub async fn listen(threshold: i16, training: bool) {
 #[tokio::main]
 pub async fn main() {
     let opt = Opt::from_args();
+
+    // Start message
     let mode = if opt.training {
         "training"
     } else {
@@ -80,5 +84,35 @@ pub async fn main() {
         opt.threshold
     );
     println!("{}", Colour::Blue.bold().paint(&launch_message));
+
+    // Schedule database insertion
+    let mut sched = JobScheduler::new();
+    if opt.training {
+        sched.add(
+            Job::new_async("0 */5 * * * *", |uuid, l| {
+                Box::pin(async {
+                    println!(
+                        "[{}] inserting training data into database...",
+                        Local::now()
+                    );
+                    api::insert_training_datapoint().await;
+                })
+            })
+            .unwrap(),
+        );
+    } else {
+        sched.add(
+            Job::new_async("0 */5 * * * *", |uuid, l| {
+                Box::pin(async {
+                    println!("[{}] inserting data into database...", Local::now());
+                    api::insert_datapoint().await;
+                })
+            })
+            .unwrap(),
+        );
+    }
+    sched.start().await;
+
+    // Start listening
     listen(opt.threshold, opt.training).await;
 }

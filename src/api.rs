@@ -1,11 +1,11 @@
 pub fn get_training_data() {
-	todo!();
+    todo!();
 }
 
 pub async fn insert_training_datapoint() {
-	todo!();
+    todo!();
 }
 
 pub async fn insert_datapoint() {
-	todo!()
+    todo!()
 }
