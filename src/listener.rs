@@ -2,7 +2,7 @@ use ansi_term::Colour;
 use bluer::*;
 use chrono::Local;
 use futures::stream::StreamExt;
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use crate::or_continue;
 

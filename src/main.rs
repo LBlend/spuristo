@@ -1,10 +1,12 @@
 use ansi_term::Colour;
 use chrono::Local;
-use std::{boxed::Box};
+use std::boxed::Box;
 use structopt::StructOpt;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod api;
+use api::database;
+
 mod listener;
 pub mod macros;
 
@@ -47,7 +49,7 @@ pub async fn main() {
                         "[{}] inserting training data into database...",
                         Local::now()
                     );
-                    api::insert_training_datapoint().await;
+                    database::insert_training_datapoint().await;
                 })
             })
             .unwrap(),
@@ -57,7 +59,7 @@ pub async fn main() {
             Job::new_async("0 */5 * * * *", |uuid, l| {
                 Box::pin(async {
                     println!("[{}] inserting data into database...", Local::now());
-                    api::insert_datapoint().await;
+                    database::insert_datapoint().await;
                 })
             })
             .unwrap(),
