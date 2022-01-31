@@ -9,9 +9,6 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 mod api;
 mod macros;
 
-// Global constants
-const BLUETOOTH_ADAPTER_NAME: &str = "hci0";
-
 // CLI arguments struct
 #[derive(StructOpt)]
 struct Opt {
@@ -20,11 +17,14 @@ struct Opt {
 
     #[structopt(short, long)]
     training: bool,
+
+    #[structopt(default_value = "hci10", long)]
+    adapter: String,
 }
 
-pub async fn listen(threshold: i16, training: bool) {
+pub async fn listen(threshold: i16, training: bool, bluetooth_adapter_name: &str) {
     let session = Session::new().await.unwrap();
-    let adapter = session.adapter(BLUETOOTH_ADAPTER_NAME).unwrap();
+    let adapter = session.adapter(bluetooth_adapter_name).unwrap();
 
     let mut devices = HashMap::new();
 
@@ -80,8 +80,8 @@ pub async fn main() {
         "prediction"
     };
     let launch_message = format!(
-        "Spuristo launched in {mode} mode with threshold set to {} dBm",
-        opt.threshold
+        "Spuristo launched in {mode} mode with threshold set to {} dBm on adapter {}",
+        opt.threshold, opt.adapter
     );
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
@@ -114,5 +114,5 @@ pub async fn main() {
     sched.start().await;
 
     // Start listening
-    listen(opt.threshold, opt.training).await;
+    listen(opt.threshold, opt.training, opt.adapter.as_str()).await;
 }
