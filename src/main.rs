@@ -1,8 +1,8 @@
 use ansi_term::Colour;
 use chrono::Local;
-use std::boxed::Box;
+use job_scheduler::{Job, JobScheduler};
+use std::{thread, time::Duration};
 use structopt::StructOpt;
-use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod api;
 use api::database;
@@ -40,32 +40,28 @@ pub async fn main() {
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
     // Schedule database insertion
-    let mut sched = JobScheduler::new();
-    if opt.training {
-        sched.add(
-            Job::new_async("0 */5 * * * *", |uuid, l| {
-                Box::pin(async {
-                    println!(
-                        "[{}] inserting training data into database...",
-                        Local::now()
-                    );
-                    database::insert_training_datapoint().await;
-                })
+    let is_training = opt.training;
+    thread::spawn(move || {
+        let mut sched = JobScheduler::new();
+        let job = if is_training {
+            Job::new("0 0/5 * * * *".parse().unwrap(), || {
+                println!("[{}] inserting data into database...", Local::now());
+                database::insert_datapoint();
             })
-            .unwrap(),
-        );
-    } else {
-        sched.add(
-            Job::new_async("0 */5 * * * *", |uuid, l| {
-                Box::pin(async {
-                    println!("[{}] inserting data into database...", Local::now());
-                    database::insert_datapoint().await;
-                })
+        } else {
+            Job::new("0 0/5 * * * *".parse().unwrap(), || {
+                println!("[{}] inserting data into database...", Local::now());
+                database::insert_training_datapoint();
             })
-            .unwrap(),
-        );
-    }
-    sched.start().await;
+        };
+
+        sched.add(job);
+
+        loop {
+            sched.tick();
+            thread::sleep(Duration::from_millis(500));
+        }
+    });
 
     // Start listening
     listener::listen(opt.threshold, opt.training, opt.adapter.as_str()).await;
