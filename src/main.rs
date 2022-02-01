@@ -19,7 +19,7 @@ struct Opt {
     #[structopt(short, long)]
     training: bool,
 
-    #[structopt(default_value = "hci10", long)]
+    #[structopt(default_value = "hci0", long)]
     adapter: String,
 }
 
