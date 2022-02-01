@@ -46,12 +46,12 @@ pub async fn main() {
         let job = if is_training {
             Job::new("0 0/5 * * * *".parse().unwrap(), || {
                 println!("[{}] inserting data into database...", Local::now());
-                database::insert_datapoint();
+                database::insert_training_datapoint();
             })
         } else {
             Job::new("0 0/5 * * * *".parse().unwrap(), || {
                 println!("[{}] inserting data into database...", Local::now());
-                database::insert_training_datapoint();
+                database::insert_datapoint();
             })
         };
 
