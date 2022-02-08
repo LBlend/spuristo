@@ -1,12 +1,10 @@
 use ansi_term::Colour;
 use chrono::Local;
-use job_scheduler::{Job, JobScheduler};
-use std::{thread, time::Duration};
 use structopt::StructOpt;
+use tokio::task;
+use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod api;
-use api::database;
-
 mod listener;
 pub mod macros;
 
@@ -40,28 +38,31 @@ pub async fn main() {
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
     // Schedule database insertion
-    let is_training = opt.training;
-    thread::spawn(move || {
-        let mut sched = JobScheduler::new();
-        let job = if is_training {
-            Job::new("0 0/5 * * * *".parse().unwrap(), || {
-                println!("[{}] inserting data into database...", Local::now());
-                database::insert_training_datapoint();
+    if opt.training {
+        task::spawn(async {
+            let mut sched = JobScheduler::new();
+            let job = Job::new_async("0 0/5 * * * *", |_uuid, _l| {
+                Box::pin(async move {
+                    api::insert_training_datapoint().await;
+                })
             })
-        } else {
-            Job::new("0 0/5 * * * *".parse().unwrap(), || {
-                println!("[{}] inserting data into database...", Local::now());
-                database::insert_datapoint();
+            .unwrap();
+            sched.add(job).expect("failed adding job to scheduler");
+            sched.start().await.expect("failed starting scheduler");
+        });
+    } else {
+        task::spawn(async {
+            let mut sched = JobScheduler::new();
+            let job = Job::new_async("0 0/5 * * * *", |_uuid, _l| {
+                Box::pin(async move {
+                    api::insert_datapoint().await;
+                })
             })
-        };
-
-        sched.add(job);
-
-        loop {
-            sched.tick();
-            thread::sleep(Duration::from_millis(500));
-        }
-    });
+            .unwrap();
+            sched.add(job).expect("failed adding job to scheduler");
+            sched.start().await.expect("failed starting scheduler");
+        });
+    }
 
     // Start listening
     listener::listen(opt.threshold, opt.training, opt.adapter.as_str()).await;
