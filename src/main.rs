@@ -38,6 +38,7 @@ pub async fn main() {
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
     // Schedule database insertion
+    // This is ugly and needs to be refactored
     if opt.training {
         task::spawn(async {
             let mut sched = JobScheduler::new();
