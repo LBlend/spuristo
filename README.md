@@ -31,6 +31,6 @@ spuristo --threshold=-75
 
 This is detailed in issue #3
 
-## Contributite
+## Contribute
 
 This project is meant to be a fun hobby project allowing me to solve the problem of not knowing how many people are at the place I hang out at school, while also giving me an excuse to learn Rust. Therefore I wish to keep contributions to a minimal in order to force myself to learn and figure out the ways of Rust. The exceptions to this are issues marked with the _Help wanted_ tag.
