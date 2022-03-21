@@ -6,7 +6,7 @@ use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod api;
 mod listener;
-pub mod macros;
+mod macros;
 
 // CLI arguments struct
 #[derive(StructOpt)]
