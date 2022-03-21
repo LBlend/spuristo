@@ -13,8 +13,10 @@ todo™️
 ```
 --adapter		Specify the name of the bluetooth adapter that will be used.
 			Default is set to "hci0". Do not touch if you don't know what you're doing.
+
 --threshold		Specify the minimum connection strength in dBm required to "count" a device.
 			Default is set to -75 dBm
+
 --training		Run the application in training mode. This will enter all datapoints into a
 			separate database table used for training the model when running in production.
 ```
