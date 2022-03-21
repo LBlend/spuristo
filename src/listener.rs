@@ -1,5 +1,5 @@
 use ansi_term::Colour;
-use bluer::*;
+use bluer::Session;
 use chrono::Local;
 use futures::stream::StreamExt;
 use std::collections::HashMap;
