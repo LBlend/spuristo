@@ -1,6 +1,6 @@
 # spuristo
 
-spuristo is a CLI tracking application that utilizes bluetooth and logistic regression to guess the number of people in the vicinity of a device. It sports an API for fetching data and aims to be configurable to suit your needs.
+spuristo is a CLI tracking application that utilizes bluetooth and linear regression to guess the number of people in the vicinity of a device. It sports an API for fetching data and aims to be configurable to suit your needs.
 
 ## Get started
 
@@ -16,5 +16,3 @@ todo™️
 --training		Run the application in training mode. This will enter all datapoints into a
 			separate database table used for training the model when running in production.
 ```
-
-
