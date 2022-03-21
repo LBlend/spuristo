@@ -16,3 +16,13 @@ todo™️
 --training		Run the application in training mode. This will enter all datapoints into a
 			separate database table used for training the model when running in production.
 ```
+
+### A note about CLI arguments
+
+There's a known issue about the `--threshold` argument where inputing negative numbers are not properly supported. In order to mitigate this, you need to use the following syntax
+
+```
+spuristo --threshold=-75
+```
+
+This is detailed in issue #3
