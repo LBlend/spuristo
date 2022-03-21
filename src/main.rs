@@ -37,7 +37,7 @@ pub async fn main() {
     );
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
-    // Schedule database insertion
+    // Schedule database insertion every 5 minutes
     // This is ugly and needs to be refactored
     if opt.training {
         task::spawn(async {
