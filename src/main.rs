@@ -1,5 +1,4 @@
 use ansi_term::Colour;
-use chrono::Local;
 use structopt::StructOpt;
 use tokio::task;
 use tokio_cron_scheduler::{Job, JobScheduler};
