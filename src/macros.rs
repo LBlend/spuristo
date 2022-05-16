@@ -3,7 +3,10 @@ macro_rules! or_continue {
     ($e:expr) => {
         match $e {
             Ok(v) => v,
-            Err(_) => continue,
+            Err(_) => {
+                println!("[or_continue!] Skipped due to error");
+                continue;
+            }
         }
     };
 }
