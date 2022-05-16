@@ -1,4 +1,7 @@
 use ansi_term::Colour;
+use bluer::Address;
+use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
 use tokio::task;
 use tokio_cron_scheduler::{Job, JobScheduler};
@@ -36,14 +39,19 @@ pub async fn main() {
     );
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
+    let device_map: Arc<Mutex<HashMap<Address, i16>>> = Arc::new(Mutex::new(HashMap::new()));
+    let device_map_listen = Arc::clone(&device_map);
+
     // Schedule database insertion every 5 minutes
     // This is ugly and needs to be refactored
     if opt.training {
-        task::spawn(async {
+        task::spawn(async move {
             let mut sched = JobScheduler::new();
-            let job = Job::new_async("0 0/5 * * * *", |_uuid, _l| {
+            let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
+                let device_map_cron = Arc::clone(&device_map);
                 Box::pin(async move {
-                    api::insert_training_datapoint().await;
+                    let devices = device_map_cron.lock().unwrap().len();
+                    api::insert_training_datapoint(devices as i16).await;
                 })
             })
             .unwrap();
@@ -51,11 +59,13 @@ pub async fn main() {
             sched.start().await.expect("failed starting scheduler");
         });
     } else {
-        task::spawn(async {
+        task::spawn(async move {
             let mut sched = JobScheduler::new();
-            let job = Job::new_async("0 0/5 * * * *", |_uuid, _l| {
+            let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
+                let device_map_cron = Arc::clone(&device_map);
                 Box::pin(async move {
-                    api::insert_datapoint().await;
+                    let devices = device_map_cron.lock().unwrap().len();
+                    api::insert_training_datapoint(devices as i16).await;
                 })
             })
             .unwrap();
@@ -65,5 +75,11 @@ pub async fn main() {
     }
 
     // Start listening
-    listener::listen(opt.threshold, opt.training, opt.adapter.as_str()).await;
+    listener::listen(
+        device_map_listen,
+        opt.threshold,
+        opt.training,
+        opt.adapter.as_str(),
+    )
+    .await;
 }
