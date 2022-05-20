@@ -1,7 +1,7 @@
-fn train() {
-	todo!();
+pub fn train() {
+    todo!();
 }
 
-fn predict() {
-	todo!();
+pub fn predict(devices: i16) -> i16 {
+    todo!();
 }
