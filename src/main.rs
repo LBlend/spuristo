@@ -7,6 +7,7 @@ use tokio::task;
 use tokio_cron_scheduler::{Job, JobScheduler};
 
 mod api;
+mod classifier;
 mod listener;
 mod macros;
 
