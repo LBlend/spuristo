@@ -66,7 +66,7 @@ pub async fn main() {
                 let device_map_cron = Arc::clone(&device_map);
                 Box::pin(async move {
                     let devices = device_map_cron.lock().unwrap().len();
-                    api::insert_training_datapoint(devices as i16).await;
+                    api::insert_datapoint(devices as i16).await;
                 })
             })
             .unwrap();
