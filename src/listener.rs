@@ -10,7 +10,6 @@ use crate::or_continue;
 pub async fn listen(
     device_map: Arc<Mutex<HashMap<Address, i16>>>,
     threshold: i16,
-    training: bool,
     bluetooth_adapter_name: &str,
 ) {
     let session = Session::new().await.unwrap();

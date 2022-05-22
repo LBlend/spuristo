@@ -63,7 +63,6 @@ pub async fn main() {
     listener::listen(
         device_map_listen,
         opt.threshold,
-        opt.training,
         opt.adapter.as_str(),
     )
     .await;
