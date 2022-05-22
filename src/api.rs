@@ -1,11 +1,28 @@
-use chrono::Local;
-use reqwest::Client;
 use crate::classifier;
+use chrono::{DateTime, Local};
+use reqwest::Client;
+use serde::{Deserialize, Serialize};
+
+#[derive(Serialize, Deserialize)]
+struct Datapoint {
+    time: DateTime<Local>,
+    devices: i16,
+    prediction_people: Option<i16>,
+    actual_people: Option<i16>,
+}
 
 pub async fn insert_datapoint(devices: i16) {
     println!("[{}] inserting data into database...", Local::now());
-    let prediction = classifier::predict(devices);
-    insert("http://httpbin.org/post", devices, Some(prediction)).await;
+
+    let prediction_people = classifier::predict(devices);
+    let datapoint = Datapoint {
+        time: Local::now(),
+        devices,
+        prediction_people: Some(prediction_people),
+        actual_people: None,
+    };
+
+    insert("http://httpbin.org/post", datapoint).await;
 }
 
 pub async fn insert_training_datapoint(devices: i16) {
@@ -13,13 +30,20 @@ pub async fn insert_training_datapoint(devices: i16) {
         "[{}] inserting training data into database...",
         Local::now()
     );
-    insert("http://httpbin.org/post", devices, None).await;
+
+    let datapoint = Datapoint {
+        time: Local::now(),
+        devices,
+        prediction_people: None,
+        actual_people: None,
+    };
+
+    insert("http://httpbin.org/post", datapoint).await;
 }
 
-async fn insert(url: &str, devices: i16, prediction: Option<i16>) {
-    println!("Received {devices} device(s)");
+async fn insert(url: &str, datapoint: Datapoint) {
     let client = Client::new();
-    let res = client.post(url).send().await;
+    let res = client.post(url).json(&datapoint).send().await;
     match res {
         Ok(res) => {
             println!("Success! - {}", res.status());
