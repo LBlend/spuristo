@@ -44,36 +44,20 @@ pub async fn main() {
     let device_map_listen = Arc::clone(&device_map);
 
     // Schedule database insertion every 5 minutes
-    // This is ugly and needs to be refactored
-    if opt.training {
-        task::spawn(async move {
-            let mut sched = JobScheduler::new();
-            let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
-                let device_map_cron = Arc::clone(&device_map);
-                Box::pin(async move {
-                    let devices = device_map_cron.lock().unwrap().len();
-                    api::insert_training_datapoint(devices as i16).await;
-                })
+    let is_training = opt.training.clone(); // Ew, but necessary
+    task::spawn(async move {
+        let mut sched = JobScheduler::new();
+        let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
+            let device_map_cron = Arc::clone(&device_map);
+            Box::pin(async move {
+                let devices = device_map_cron.lock().unwrap().len();
+                api::insert_datapoint(devices as i16, is_training).await;
             })
-            .unwrap();
-            sched.add(job).expect("failed adding job to scheduler");
-            sched.start().await.expect("failed starting scheduler");
-        });
-    } else {
-        task::spawn(async move {
-            let mut sched = JobScheduler::new();
-            let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
-                let device_map_cron = Arc::clone(&device_map);
-                Box::pin(async move {
-                    let devices = device_map_cron.lock().unwrap().len();
-                    api::insert_datapoint(devices as i16).await;
-                })
-            })
-            .unwrap();
-            sched.add(job).expect("failed adding job to scheduler");
-            sched.start().await.expect("failed starting scheduler");
-        });
-    }
+        })
+        .unwrap();
+        sched.add(job).expect("failed adding job to scheduler");
+        sched.start().await.expect("failed starting scheduler");
+    });
 
     // Start listening
     listener::listen(

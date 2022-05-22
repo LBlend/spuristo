@@ -11,32 +11,20 @@ struct Datapoint {
     actual_people: Option<i16>,
 }
 
-pub async fn insert_datapoint(devices: i16) {
+pub async fn insert_datapoint(devices: i16, is_training: bool) {
     println!("[{}] inserting data into database...", Local::now());
 
-    let prediction_people = classifier::predict(devices);
-    let datapoint = Datapoint {
-        time: Local::now(),
-        devices,
-        prediction_people: Some(prediction_people),
-        actual_people: None,
-    };
-
-    insert(datapoint).await;
-}
-
-pub async fn insert_training_datapoint(devices: i16) {
-    println!(
-        "[{}] inserting training data into database...",
-        Local::now()
-    );
-
-    let datapoint = Datapoint {
+    let mut datapoint = Datapoint {
         time: Local::now(),
         devices,
         prediction_people: None,
         actual_people: None,
     };
+
+    if !is_training {
+        let prediction_people = classifier::predict(devices);
+        datapoint.prediction_people = Some(prediction_people);
+    }
 
     insert(datapoint).await;
 }
