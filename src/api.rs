@@ -22,7 +22,7 @@ pub async fn insert_datapoint(devices: i16) {
         actual_people: None,
     };
 
-    insert("http://httpbin.org/post", datapoint).await;
+    insert(datapoint).await;
 }
 
 pub async fn insert_training_datapoint(devices: i16) {
@@ -38,12 +38,16 @@ pub async fn insert_training_datapoint(devices: i16) {
         actual_people: None,
     };
 
-    insert("http://httpbin.org/post", datapoint).await;
+    insert(datapoint).await;
 }
 
-async fn insert(url: &str, datapoint: Datapoint) {
+async fn insert(datapoint: Datapoint) {
     let client = Client::new();
-    let res = client.post(url).json(&datapoint).send().await;
+    let res = client
+        .post("http://httpbin.org/post")
+        .json(&datapoint)
+        .send()
+        .await;
     match res {
         Ok(res) => {
             println!("Success! - {}", res.status());
