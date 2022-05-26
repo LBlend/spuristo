@@ -11,7 +11,7 @@ struct Datapoint {
     actual_people: Option<i16>,
 }
 
-pub async fn insert_datapoint(devices: i16, is_training: bool) {
+pub async fn insert_datapoint(devices: i16, is_training: bool, api_root: &str, api_token: &str) {
     println!("[{}] inserting data into database...", Local::now());
 
     let mut datapoint = Datapoint {
@@ -26,13 +26,14 @@ pub async fn insert_datapoint(devices: i16, is_training: bool) {
         datapoint.prediction_people = Some(prediction_people);
     }
 
-    insert(datapoint).await;
+    insert(datapoint, api_root, api_token).await;
 }
 
-async fn insert(datapoint: Datapoint) {
+async fn insert(datapoint: Datapoint, api_root: &str, api_token: &str) {
     let client = Client::new();
     let res = client
-        .post("http://httpbin.org/post")
+        .post("{api_root}/insert")
+        .header("Authorization", format!("Bearer {}", api_token))
         .json(&datapoint)
         .send()
         .await;

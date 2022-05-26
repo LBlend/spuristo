@@ -1,6 +1,8 @@
 use ansi_term::Colour;
 use bluer::Address;
+use dotenv::dotenv;
 use std::collections::HashMap;
+use std::env;
 use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
 use tokio::task;
@@ -26,6 +28,11 @@ struct Opt {
 
 #[tokio::main]
 pub async fn main() {
+    // Load environment variables
+    dotenv().ok();
+    let api_root = env::var("SPURISTO_API_ROOT").expect("$SPURISTO_API_ROOT is not set");
+    let api_token = env::var("SPURISTO_API_TOKEN").expect("$SPURISTO_API_TOKEN is not set");
+
     let opt = Opt::from_args();
 
     // Start message
@@ -49,9 +56,11 @@ pub async fn main() {
         let mut sched = JobScheduler::new();
         let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
             let device_map_cron = Arc::clone(&device_map);
+            let api_root = api_root.clone();
+            let api_token = api_token.clone();
             Box::pin(async move {
                 let devices = device_map_cron.lock().unwrap().len();
-                api::insert_datapoint(devices as i16, is_training).await;
+                api::insert_datapoint(devices as i16, is_training, &api_root, &api_token).await;
             })
         })
         .unwrap();
