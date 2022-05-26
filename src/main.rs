@@ -33,6 +33,7 @@ pub async fn main() {
     let api_root = env::var("SPURISTO_API_ROOT").expect("$SPURISTO_API_ROOT is not set");
     let api_token = env::var("SPURISTO_API_TOKEN").expect("$SPURISTO_API_TOKEN is not set");
 
+    // Load CLI arguments
     let opt = Opt::from_args();
 
     // Start message
@@ -47,6 +48,7 @@ pub async fn main() {
     );
     println!("{}", Colour::Blue.bold().paint(&launch_message));
 
+    // Create shared state keeping track of devices
     let device_map: Arc<Mutex<HashMap<Address, i16>>> = Arc::new(Mutex::new(HashMap::new()));
     let device_map_listen = Arc::clone(&device_map);
 
