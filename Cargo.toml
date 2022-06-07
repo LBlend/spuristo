@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies]
 ansi_term = "0.12"
 async-channel = "1.6"
-bluer = "0.13"
+bluer = { version = "0.15", features = ["bluetoothd"] }
 chrono = { version = "0.4", features = ["serde"] }
 dotenv = "0.15"
 futures = "0.3"
