@@ -2,11 +2,13 @@ use ansi_term::Colour;
 use bluer::Address;
 use dotenv::dotenv;
 use std::collections::HashMap;
-use std::env;
 use std::sync::{Arc, Mutex};
 use structopt::StructOpt;
 use tokio::task;
 use tokio_cron_scheduler::{Job, JobScheduler};
+
+#[macro_use]
+extern crate dotenv_codegen;
 
 mod api;
 mod classifier;
@@ -30,8 +32,6 @@ struct Opt {
 pub async fn main() {
     // Load environment variables
     dotenv().ok();
-    let api_root = env::var("SPURISTO_API_ROOT").expect("$SPURISTO_API_ROOT is not set");
-    let api_token = env::var("SPURISTO_API_TOKEN").expect("$SPURISTO_API_TOKEN is not set");
 
     // Load CLI arguments
     let opt = Opt::from_args();
@@ -58,11 +58,9 @@ pub async fn main() {
         let mut sched = JobScheduler::new();
         let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
             let device_map_cron = Arc::clone(&device_map);
-            let api_root = api_root.clone();
-            let api_token = api_token.clone();
             Box::pin(async move {
                 let devices = device_map_cron.lock().unwrap().len();
-                api::insert_datapoint(devices as i16, is_training, &api_root, &api_token).await;
+                api::insert_datapoint(devices as i16, is_training).await;
             })
         })
         .unwrap();
@@ -71,10 +69,5 @@ pub async fn main() {
     });
 
     // Start listening
-    listener::listen(
-        device_map_listen,
-        opt.threshold,
-        opt.adapter.as_str(),
-    )
-    .await;
+    listener::listen(device_map_listen, opt.threshold, opt.adapter.as_str()).await;
 }

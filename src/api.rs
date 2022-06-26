@@ -3,6 +3,9 @@ use chrono::{DateTime, Local};
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
+const API_ROOT: &str = dotenv!("SPURISTO_API_ROOT");
+const API_TOKEN: &str = dotenv!("SPURISTO_API_TOKEN");
+
 #[derive(Serialize, Deserialize)]
 struct Datapoint {
     time: DateTime<Local>,
@@ -11,7 +14,7 @@ struct Datapoint {
     actual_people: Option<i16>,
 }
 
-pub async fn insert_datapoint(devices: i16, is_training: bool, api_root: &str, api_token: &str) {
+pub async fn insert_datapoint(devices: i16, is_training: bool) {
     println!("[{}] inserting data into database...", Local::now());
 
     let mut datapoint = Datapoint {
@@ -26,14 +29,14 @@ pub async fn insert_datapoint(devices: i16, is_training: bool, api_root: &str, a
         datapoint.prediction_people = Some(prediction_people);
     }
 
-    insert(datapoint, api_root, api_token).await;
+    insert(datapoint).await;
 }
 
-async fn insert(datapoint: Datapoint, api_root: &str, api_token: &str) {
+async fn insert(datapoint: Datapoint) {
     let client = Client::new();
     let res = client
-        .post("{api_root}/insert")
-        .header("Authorization", format!("Bearer {}", api_token))
+        .post(format!("{}/insert", API_ROOT))
+        .header("Authorization", format!("Bearer {}", API_TOKEN))
         .json(&datapoint)
         .send()
         .await;
