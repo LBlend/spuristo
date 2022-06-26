@@ -7,11 +7,11 @@ const API_ROOT: &str = dotenv!("SPURISTO_API_ROOT");
 const API_TOKEN: &str = dotenv!("SPURISTO_API_TOKEN");
 
 #[derive(Serialize, Deserialize)]
-struct Datapoint {
-    time: DateTime<Local>,
-    devices: i16,
-    prediction_people: Option<i16>,
-    actual_people: Option<i16>,
+pub struct Datapoint {
+    pub time: DateTime<Local>,
+    pub devices: i16,
+    pub prediction_people: Option<i16>,
+    pub actual_people: Option<i16>,
 }
 
 pub async fn insert_datapoint(devices: i16, is_training: bool) {
