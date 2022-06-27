@@ -1,6 +1,4 @@
-use crate::classifier;
 use chrono::{DateTime, Local};
-use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 const API_ROOT: &str = dotenv!("SPURISTO_API_ROOT");
@@ -14,38 +12,56 @@ pub struct Datapoint {
     pub actual_people: Option<i16>,
 }
 
-pub async fn insert_datapoint(devices: i16, is_training: bool) {
+pub fn insert_datapoint(devices: i16, prediction_people: Option<i16>) {
     println!("[{}] inserting data into database...", Local::now());
 
-    let mut datapoint = Datapoint {
+    let datapoint = Datapoint {
         time: Local::now(),
         devices,
-        prediction_people: None,
+        prediction_people,
         actual_people: None,
     };
 
-    if !is_training {
-        let prediction_people = classifier::predict(devices);
-        datapoint.prediction_people = Some(prediction_people);
-    }
-
-    insert(datapoint).await;
+    insert(datapoint);
 }
 
-async fn insert(datapoint: Datapoint) {
-    let client = Client::new();
+fn insert(datapoint: Datapoint) {
+    //let client = Client::new();
+    let client = reqwest::blocking::Client::new();
     let res = client
         .post(format!("{}/insert", API_ROOT))
         .header("Authorization", format!("Bearer {}", API_TOKEN))
         .json(&datapoint)
-        .send()
-        .await;
+        .send();
+
     match res {
         Ok(res) => {
             println!("Success! - {}", res.status());
         }
         Err(e) => {
             println!("Failed! - {}", e);
+        }
+    }
+}
+
+pub fn get_training_data() -> Option<Vec<Datapoint>> {
+    let client = reqwest::blocking::Client::new();
+    let res = client
+        .get(format!("{}/training", API_ROOT))
+        .header("Authorization", format!("Bearer {}", API_TOKEN))
+        .send();
+
+    match res {
+        Ok(res) => {
+            println!("Success! - {}", res.status());
+            let data: Vec<Datapoint> = res
+                .json()
+                .expect("Failed deserializing JSON training data!");
+            Some(data)
+        }
+        Err(e) => {
+            println!("Failed! - {}", e);
+            None
         }
     }
 }

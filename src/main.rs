@@ -1,11 +1,12 @@
 use ansi_term::Colour;
 use bluer::Address;
+use classifier::Classifier;
 use dotenv::dotenv;
+use job_scheduler::{Job, JobScheduler};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use std::time::Duration;
 use structopt::StructOpt;
-use tokio::task;
-use tokio_cron_scheduler::{Job, JobScheduler};
 
 #[macro_use]
 extern crate dotenv_codegen;
@@ -18,11 +19,11 @@ mod macros;
 // CLI arguments struct
 #[derive(StructOpt)]
 struct Opt {
+    #[structopt(short, long)]
+    collection: bool,
+
     #[structopt(default_value = "-75", long)]
     threshold: i16,
-
-    #[structopt(short, long)]
-    training: bool,
 
     #[structopt(default_value = "hci0", long)]
     adapter: String,
@@ -37,8 +38,8 @@ pub async fn main() {
     let opt = Opt::from_args();
 
     // Start message
-    let mode = if opt.training {
-        "training"
+    let mode = if opt.collection {
+        "collection"
     } else {
         "prediction"
     };
@@ -52,20 +53,35 @@ pub async fn main() {
     let device_map: Arc<Mutex<HashMap<Address, i16>>> = Arc::new(Mutex::new(HashMap::new()));
     let device_map_listen = Arc::clone(&device_map);
 
+    let is_collecting = opt.collection;
+    let is_collecting = true; // Temporary
+
+    // Create empty classifier. Fetch data and train it if we're not in collection mode
+    let mut classifier = Classifier::new();
+    if !is_collecting {
+        classifier.populate();
+        classifier.train();
+    }
+
     // Schedule database insertion every 5 minutes
-    let is_training = opt.training.clone(); // Ew, but necessary
-    task::spawn(async move {
+    std::thread::spawn(move || {
         let mut sched = JobScheduler::new();
-        let job = Job::new_async("0 0/5 * * * *", move |_uuid, _l| {
-            let device_map_cron = Arc::clone(&device_map);
-            Box::pin(async move {
-                let devices = device_map_cron.lock().unwrap().len();
-                api::insert_datapoint(devices as i16, is_training).await;
-            })
-        })
-        .unwrap();
-        sched.add(job).expect("failed adding job to scheduler");
-        sched.start().await.expect("failed starting scheduler");
+
+        let job = Job::new("0 0/5 * * * *".parse().unwrap(), || {
+            let devices = device_map.lock().unwrap().len() as i16;
+            let prediction_people = if is_collecting {
+                None
+            } else {
+                Some(classifier.predict(devices))
+            };
+            api::insert_datapoint(devices, prediction_people);
+        });
+
+        sched.add(job);
+        loop {
+            sched.tick();
+            std::thread::sleep(Duration::from_millis(500));
+        }
     });
 
     // Start listening
