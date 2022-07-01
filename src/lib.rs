@@ -1,13 +1,13 @@
 mod api;
-mod classifier;
+mod linreg;
 
 #[cfg(test)]
 mod tests {
-    use crate::classifier::Classifier;
+    use crate::linreg::LinRegModel;
 
     #[test]
     fn regression() {
-        let mut model = Classifier::new();
+        let mut model = LinRegModel::new();
 
         // Simulate populating data by manually doing it here
         let data: Vec<i16> = vec![2, 8, 6, 4, 9, 3, 12];

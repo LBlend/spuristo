@@ -1,16 +1,16 @@
 use crate::api::get_training_data;
 use std::iter::zip;
 
-pub struct Classifier {
+pub struct LinRegModel {
     pub data: Vec<i16>,
     pub labels: Vec<i16>,
     slope: Option<f32>,
     intercept: Option<f32>,
 }
 
-impl Classifier {
-    pub fn new() -> Classifier {
-        Classifier {
+impl LinRegModel {
+    pub fn new() -> LinRegModel {
+        LinRegModel {
             data: Vec::new(),
             labels: Vec::new(),
             slope: None,

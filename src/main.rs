@@ -1,8 +1,8 @@
 use ansi_term::Colour;
 use bluer::Address;
-use classifier::Classifier;
 use dotenv::dotenv;
 use job_scheduler::{Job, JobScheduler};
+use linreg::LinRegModel;
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
 use std::time::Duration;
@@ -12,7 +12,7 @@ use structopt::StructOpt;
 extern crate dotenv_codegen;
 
 mod api;
-mod classifier;
+mod linreg;
 mod listener;
 mod macros;
 
@@ -56,7 +56,7 @@ pub async fn main() {
     let is_collecting = opt.collection;
 
     // Create empty classifier. Fetch data and train it if we're not in collection mode
-    let mut classifier = Classifier::new();
+    let mut classifier = LinRegModel::new();
     if !is_collecting {
         classifier.populate();
 
