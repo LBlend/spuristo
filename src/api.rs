@@ -1,4 +1,5 @@
 use chrono::{DateTime, Local};
+use dotenv_codegen::dotenv;
 use serde::{Deserialize, Serialize};
 
 const API_ROOT: &str = dotenv!("SPURISTO_API_ROOT");
@@ -26,7 +27,6 @@ pub fn insert_datapoint(devices: i16, prediction_people: Option<i16>) {
 }
 
 fn insert(datapoint: Datapoint) {
-    //let client = Client::new();
     let client = reqwest::blocking::Client::new();
     let res = client
         .post(format!("{}/insert", API_ROOT))
@@ -36,7 +36,11 @@ fn insert(datapoint: Datapoint) {
 
     match res {
         Ok(res) => {
-            println!("Success! - {}", res.status());
+            if res.status().is_success() {
+                println!("Success! - {}", res.status());
+            } else {
+                println!("Fail! - {}", res.status());
+            }
         }
         Err(e) => {
             println!("Failed! - {}", e);

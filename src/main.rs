@@ -54,12 +54,19 @@ pub async fn main() {
     let device_map_listen = Arc::clone(&device_map);
 
     let is_collecting = opt.collection;
-    let is_collecting = true; // Temporary
 
     // Create empty classifier. Fetch data and train it if we're not in collection mode
     let mut classifier = Classifier::new();
     if !is_collecting {
         classifier.populate();
+
+        // Simulate populating data by manually doing it here
+        /* let data: Vec<i16> = vec![2, 8, 6, 4, 9, 3, 12];
+        classifier.data = data;
+
+        let labels = vec![0, 3, 3, 2, 4, 1, 9];
+        classifier.labels = labels; */
+
         classifier.train();
     }
 
@@ -69,12 +76,15 @@ pub async fn main() {
 
         let job = Job::new("0 0/5 * * * *".parse().unwrap(), || {
             let devices = device_map.lock().unwrap().len() as i16;
-            let prediction_people = if is_collecting {
-                None
-            } else {
-                Some(classifier.predict(devices))
-            };
-            api::insert_datapoint(devices, prediction_people);
+
+            // This is really fucking dumb
+            if !is_collecting {
+                if let Some(prediction_people) = classifier.predict(devices) {
+                    api::insert_datapoint(devices, Some(prediction_people));
+                    return;
+                }
+            }
+            api::insert_datapoint(devices, None);
         });
 
         sched.add(job);
