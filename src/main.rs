@@ -79,12 +79,10 @@ pub async fn main() {
 
             // This is really fucking dumb
             if !is_collecting {
-                if let Some(prediction_people) = classifier.predict(devices) {
-                    api::insert_datapoint(devices, Some(prediction_people));
-                    return;
-                }
+                api::insert_datapoint(devices, classifier.predict(devices));
+            } else {
+                api::insert_datapoint(devices, None);
             }
-            api::insert_datapoint(devices, None);
         });
 
         sched.add(job);
