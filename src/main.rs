@@ -56,9 +56,9 @@ pub async fn main() {
     let is_collecting = opt.collection;
 
     // Create empty classifier. Fetch data and train it if we're not in collection mode
-    let mut classifier = LinRegModel::new();
+    let mut model = LinRegModel::new();
     if !is_collecting {
-        classifier.populate();
+        model.populate();
 
         // Simulate populating data by manually doing it here
         /* let data: Vec<i16> = vec![2, 8, 6, 4, 9, 3, 12];
@@ -67,7 +67,7 @@ pub async fn main() {
         let labels = vec![0, 3, 3, 2, 4, 1, 9];
         classifier.labels = labels; */
 
-        classifier.train();
+        model.train();
     }
 
     // Schedule database insertion every 5 minutes
@@ -79,7 +79,7 @@ pub async fn main() {
 
             // This is really fucking dumb
             if !is_collecting {
-                api::insert_datapoint(devices, classifier.predict(devices));
+                api::insert_datapoint(devices, model.predict(devices));
             } else {
                 api::insert_datapoint(devices, None);
             }
