@@ -3,13 +3,9 @@ use bluer::Address;
 use dotenv::dotenv;
 use job_scheduler::{Job, JobScheduler};
 use linreg::LinRegModel;
-use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
-use std::time::Duration;
+use std::{collections::HashMap, time::Duration};
 use structopt::StructOpt;
-
-#[macro_use]
-extern crate dotenv_codegen;
 
 mod api;
 mod linreg;
@@ -29,11 +25,7 @@ struct Opt {
     adapter: String,
 }
 
-#[tokio::main]
-pub async fn main() {
-    // Load environment variables
-    dotenv().ok();
-
+async fn run() {
     // Load CLI arguments
     let opt = Opt::from_args();
 
@@ -52,22 +44,22 @@ pub async fn main() {
     // Create shared state keeping track of devices
     let device_map: Arc<Mutex<HashMap<Address, i16>>> = Arc::new(Mutex::new(HashMap::new()));
     let device_map_listen = Arc::clone(&device_map);
-
+    
     let is_collecting = opt.collection;
 
     // Create empty classifier. Fetch data and train it if we're not in collection mode
     let mut model = LinRegModel::new();
     if !is_collecting {
-        model.populate();
+        model.populate().expect("Failed to populate model!");
 
         // Simulate populating data by manually doing it here
-        /* let data: Vec<i16> = vec![2, 8, 6, 4, 9, 3, 12];
-        classifier.data = data;
-
+        // TODO: remove this code when we have some real data in our database
+        let data: Vec<i16> = vec![2, 8, 6, 4, 9, 3, 12];
+        model.data = data;
         let labels = vec![0, 3, 3, 2, 4, 1, 9];
-        classifier.labels = labels; */
+        model.labels = labels;
 
-        model.train();
+        model.train().expect("Training failed!");
     }
 
     // Schedule database insertion every 5 minutes
@@ -78,11 +70,16 @@ pub async fn main() {
             let devices = device_map.lock().unwrap().len() as i16;
 
             // This is really fucking dumb
-            if !is_collecting {
-                api::insert_datapoint(devices, model.predict(devices));
+            let prediction_people = if !is_collecting {
+                model.predict(devices)
             } else {
-                api::insert_datapoint(devices, None);
+                None
+            };
+            match prediction_people {
+                Some(x) => println!("Predicted {} people", x),
+                None => println!("People prediction failed!"),
             }
+            api::insert_datapoint(devices, prediction_people);
         });
 
         sched.add(job);
@@ -94,4 +91,12 @@ pub async fn main() {
 
     // Start listening
     listener::listen(device_map_listen, opt.threshold, opt.adapter.as_str()).await;
+}
+
+#[tokio::main]
+pub async fn main() {
+    // Load environment variables
+    dotenv().ok();
+
+    run().await;
 }

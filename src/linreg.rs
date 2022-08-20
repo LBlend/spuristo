@@ -1,4 +1,5 @@
 use crate::api::get_training_data;
+use anyhow::{anyhow, Result};
 use std::iter::zip;
 
 pub struct LinRegModel {
@@ -18,7 +19,7 @@ impl LinRegModel {
         }
     }
 
-    pub fn populate(&mut self) {
+    pub fn populate(&mut self) -> Result<()> {
         // TODO: replace with result type instead of panic. Propogate this error
 
         let training_data = get_training_data();
@@ -33,18 +34,26 @@ impl LinRegModel {
                 .filter_map(|datapoint| datapoint.actual_people)
                 .collect();
 
-            if data.len() == labels.len() {
-                panic!("Data and labels are not the same length");
+            if data.len() != labels.len() {
+                return Err(anyhow!(
+                    "Data and labels are not the same length. Data length: {}, labels length: {}",
+                    data.len(),
+                    labels.len()
+                ));
             }
 
             self.data = data;
             self.labels = labels;
         } else {
-            panic!("No training data found! Consider running the application in collection mode.");
+            return Err(anyhow!(
+                "No training data found! Consider running the application in collection mode."
+            ));
         }
+
+        Ok(())
     }
 
-    pub fn train(&mut self) {
+    pub fn train(&mut self) -> Result<()> {
         // TODO: replace with result type instead of panic. Propogate this error
 
         let x_sum: i16 = self.data.iter().sum();
@@ -66,15 +75,17 @@ impl LinRegModel {
         self.slope = Some(weight_2 / weight_1);
         match self.slope {
             Some(slope) => self.intercept = Some(y_mean - slope * x_mean),
-            None => panic!("Regression slope is none, for some reason..."),
+            None => return Err(anyhow!("Regression slope is none, for some reason...")),
         }
+
+        Ok(())
     }
 
     pub fn predict(&self, devices: i16) -> Option<i16> {
         if let (Some(slope), Some(intercept)) = (self.slope, self.intercept) {
             let prediction = Some((slope * devices as f32 + intercept).round() as i16);
             if prediction < Some(0) || prediction > Some(32767) {
-                Some(0)
+                Some(0)  // if prediction is out of bounds, return 0
             } else {
                 prediction
             }

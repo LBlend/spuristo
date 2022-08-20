@@ -15,7 +15,6 @@ pub struct Datapoint {
 
 pub fn insert_datapoint(devices: i16, prediction_people: Option<i16>) {
     println!("[{}] inserting data into database...", Local::now());
-
     let datapoint = Datapoint {
         time: Local::now(),
         devices,
@@ -27,19 +26,16 @@ pub fn insert_datapoint(devices: i16, prediction_people: Option<i16>) {
 }
 
 fn insert(datapoint: Datapoint) {
-    let client = reqwest::blocking::Client::new();
-    let res = client
-        .post(format!("{}/insert", API_ROOT))
-        .header("Authorization", format!("Bearer {}", API_TOKEN))
-        .json(&datapoint)
-        .send();
+    let req = ureq::post(format!("{}/insert", API_ROOT).as_str())
+        .set("Authorization", format!("Bearer {}", API_TOKEN).as_str())
+        .send_json(&datapoint);
 
-    match res {
+    match req {
         Ok(res) => {
-            if res.status().is_success() {
+            if res.status() >= 200 && res.status() < 300 {  // Yeah this is kind of a shit way to do this
                 println!("Success! - {}", res.status());
             } else {
-                println!("Fail! - {}", res.status());
+                println!("Error! - {}", res.status());
             }
         }
         Err(e) => {
@@ -49,22 +45,20 @@ fn insert(datapoint: Datapoint) {
 }
 
 pub fn get_training_data() -> Option<Vec<Datapoint>> {
-    let client = reqwest::blocking::Client::new();
-    let res = client
-        .get(format!("{}/training", API_ROOT))
-        .header("Authorization", format!("Bearer {}", API_TOKEN))
-        .send();
-
-    match res {
+    let req = ureq::get(format!("{}/training", API_ROOT).as_str())
+        .set("Authorization", format!("Bearer {}", API_TOKEN).as_str())
+        .call();
+    
+    match req {
         Ok(res) => {
-            println!("Success! - {}", res.status());
-            let data: Vec<Datapoint> = res
-                .json()
+            println!("Successfully retrieved training data!");
+            let data = res
+                .into_json()
                 .expect("Failed deserializing JSON training data!");
             Some(data)
         }
         Err(e) => {
-            println!("Failed! - {}", e);
+            println!("Failed retrieving training data! - {}", e);
             None
         }
     }
